@@ -13,17 +13,66 @@
     align-items: center;
     background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
-  .container { text-align: center; }
+  /* ===== 页面容器 ===== */
+  .page {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+    flex-direction: column;
+    align-items: center;
+  }
+  .page.active { display: flex; }
 
-  h1 {
+  /* ===== 转盘页面 ===== */
+  .roulette-header {
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 22px 0 0;
+    position: relative;
+  }
+  .roulette-header h1 {
     color: #ffd700;
     font-size: 2.5rem;
-    margin-bottom: 30px;
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
     letter-spacing: 4px;
+    width: 100%;
+    text-align: center;
+  }
+  .btn-collection {
+    align-self: flex-end;
+    margin-top: 4px;
+    padding: 5px 14px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: rgba(255, 215, 0, 0.65);
+    background: transparent;
+    border: 1px solid rgba(255, 215, 0, 0.18);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+  .btn-collection:hover {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.5);
+    background: rgba(255, 215, 0, 0.06);
+    transform: scale(1.05);
+  }
+
+  .roulette-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 
   .wheel-wrap {
@@ -142,7 +191,44 @@
     transform: none;
   }
 
-  /* 弹窗 */
+  .footer {
+    color: rgba(255,255,255,0.25);
+    margin-top: 20px;
+    font-size: 0.85rem;
+  }
+
+  /* ===== 迷雾揭晓 ===== */
+  .mist-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 90;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(210, 200, 190, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    pointer-events: none;
+    transition: background 0.9s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1), -webkit-backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .mist-overlay.fog-in {
+    background: rgba(210, 200, 190, 0.70);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .mist-overlay.fog-out {
+    background: rgba(210, 200, 190, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    transition: background 0.9s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1), -webkit-backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .wheel-wrap.blurred {
+    filter: blur(4px);
+    transition: filter 0.6s ease;
+  }
+
+  /* ===== 弹窗 ===== */
   .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -168,6 +254,7 @@
     padding: 40px 50px;
     text-align: center;
     max-width: 480px;
+    width: 90%;
     box-shadow: 0 0 60px rgba(255, 200, 0, 0.3), 0 20px 60px rgba(0,0,0,0.5);
     border: 2px solid #ffd700;
     animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -178,16 +265,8 @@
     from { transform: scale(0.5); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
   }
-  .modal::before {
-    content: '🍚';
-    position: absolute;
-    top: -30px; right: -20px;
-    font-size: 120px;
-    opacity: 0.1;
-    transform: rotate(20deg);
-  }
 
-  .modal-icon { font-size: 4rem; margin-bottom: 10px; animation: bounce 1s ease infinite; }
+  .modal-icon { font-size: 4rem; margin-bottom: 10px; animation: bounce 1s ease infinite; display: block; }
   @keyframes bounce {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
@@ -235,7 +314,7 @@
   }
   .btn-close:hover { transform: scale(1.05); }
 
-  /* 五彩纸屑 */
+  /* ===== 五彩纸屑 ===== */
   .confetti-box {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -254,142 +333,250 @@
     100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
   }
 
-  /* 窄屏适配 */
-  @media (max-width: 440px) {
-    .modal {
-      padding: 28px 20px;
-      margin: 0 12px;
-    }
-    .result-text {
-      font-size: 1.5rem;
-      padding: 8px 14px;
-      letter-spacing: 1px;
-      word-break: keep-all;
-    }
-    .sub-text {
-      font-size: 0.9rem;
-      line-height: 1.5;
-      word-break: break-word;
-    }
-    h1 { font-size: 1.8rem; }
-  }
-
-  .footer {
-    color: rgba(255,255,255,0.25);
-    margin-top: 20px;
-    font-size: 0.85rem;
-  }
-
-  /* ===== 迷雾揭晓 ===== */
-  .mist-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 90;
+  /* ===== 图鉴页面 ===== */
+  .collection-header {
+    width: 100%;
+    max-width: 640px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    background: rgba(210, 200, 190, 0);
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
-    pointer-events: none;
-    transition: background 0.9s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1), -webkit-backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 10px 4px 15px;
   }
-  .mist-overlay.fog-in {
-    background: rgba(210, 200, 190, 0.70);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+  .collection-header h1 {
+    color: #ffd700;
+    font-size: 1.5rem;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+    letter-spacing: 3px;
+    text-align: center;
+    flex: 1;
   }
-  .mist-overlay.fog-out {
-    background: rgba(210, 200, 190, 0);
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
-    transition: background 0.9s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1), -webkit-backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  .btn-back {
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #1a1a2e;
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 3px 15px rgba(255, 215, 0, 0.3);
+    white-space: nowrap;
+    z-index: 20;
+  }
+  .btn-back:hover {
+    transform: translateY(-1px) scale(1.04);
   }
 
-  /* 转盘模糊 */
-  .wheel-wrap.blurred {
-    filter: blur(4px);
-    transition: filter 0.6s ease;
+  .collection-stats {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    text-align: center;
+    width: 100%;
+    max-width: 640px;
+  }
+  .collection-stats span { color: #ffd700; }
+
+  .collection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    width: 100%;
+    max-width: 640px;
+    padding-bottom: 30px;
+  }
+
+  .collection-card {
+    background: linear-gradient(145deg, #1e2a4a, #162040);
+    border-radius: 16px;
+    padding: 16px 10px;
+    text-align: center;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .collection-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 215, 0, 0.4);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.1);
+  }
+  .collection-card.unlocked {
+    border-color: rgba(255, 215, 0, 0.4);
+    background: linear-gradient(145deg, #2a1e0a, #1e2a4a);
+  }
+  .collection-card .card-icon {
+    font-size: 2.8rem;
+    display: block;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .collection-card .card-name {
+    color: #ccc;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    margin-bottom: 6px;
+    word-break: keep-all;
+  }
+  .collection-card .card-count {
+    display: inline-block;
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    font-size: 0.85rem;
+    font-weight: bold;
+    padding: 2px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+  }
+  .collection-card .card-count.zero {
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.08);
+  }
+  .collection-card .card-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 0.7rem;
+    opacity: 0.4;
+  }
+
+  .btn-reset {
+    margin: 5px 0 20px;
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.4);
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-reset:hover {
+    color: #ff6b6b;
+    border-color: rgba(255, 107, 107, 0.4);
+  }
+
+  /* ===== 窄屏适配 ===== */
+  @media (max-width: 480px) {
+    .roulette-header { padding: 16px 0 0; }
+    .roulette-header h1 { font-size: 1.8rem; letter-spacing: 2px; }
+    .btn-collection { font-size: 0.8rem; padding: 4px 12px; }
+    .btn-spin { font-size: 1.2rem; padding: 12px 40px; margin-top: 25px; }
+    .modal { padding: 28px 20px; margin: 0 12px; }
+    .modal-icon { font-size: 3.5rem; }
+    .result-text { font-size: 1.8rem; padding: 8px 16px; letter-spacing: 2px; }
+    .sub-text { font-size: 0.9rem; line-height: 1.5; }
+    .collection-grid {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 8px;
+    }
+    .collection-card { padding: 12px 6px; }
+    .collection-card .card-icon { font-size: 2.2rem; }
+    .collection-card .card-name { font-size: 0.7rem; }
+    .collection-header h1 { font-size: 1.2rem; }
+    .btn-back { font-size: 0.8rem; padding: 6px 12px; }
   }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>🍽️ 今晚吃什么？</h1>
-
-  <div class="wheel-wrap">
-    <div class="outer-ring">
-      <div class="inner-ring">
-        <div class="bulbs" id="bulbs"></div>
-        <canvas id="wheel" width="600" height="600"></canvas>
-      </div>
-    </div>
-    <div class="pointer"></div>
-  </div>
-
-  <button class="btn-spin" id="spinBtn">🎯 转一下</button>
-  <div class="footer">转到的就是今晚的答案 ✨</div>
-</div>
-
-<!-- 迷雾揭晓（纯雾效，结果由弹窗呈现） -->
+<!-- ========== 迷雾遮罩 ========== -->
 <div class="mist-overlay" id="mistOverlay"></div>
 
+<!-- ========== 弹窗 ========== -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <div class="modal-icon">🍖</div>
+    <span class="modal-icon" id="modalIcon">🍖</span>
     <h2>🎉 今晚就吃这个！</h2>
     <div class="result-text" id="resultText">隆江猪脚饭</div>
-    <div class="sub-text" id="subText">
-      命运的安排，不可抗拒！<br>
-      吃了都说好 👍
-    </div>
+    <div class="sub-text" id="subText">一碗隆江猪脚饭，吃出男人的浪漫。</div>
     <button class="btn-close" onclick="closeModal()">好！就吃这个！</button>
   </div>
 </div>
 
+<!-- ========== 五彩纸屑 ========== -->
 <div class="confetti-box" id="confettiBox"></div>
 
+<!-- ==================== 页面1：转盘 ==================== -->
+<div class="page active" id="pageRoulette">
+  <div class="roulette-header">
+    <h1>🍽️ 今晚吃什么？</h1>
+    <button class="btn-collection" onclick="showCollection()">📖 美食图鉴</button>
+  </div>
+
+  <div class="roulette-main">
+    <div class="wheel-wrap">
+      <div class="outer-ring">
+        <div class="inner-ring">
+          <div class="bulbs" id="bulbs"></div>
+          <canvas id="wheel" width="600" height="600"></canvas>
+        </div>
+      </div>
+      <div class="pointer"></div>
+    </div>
+
+    <button class="btn-spin" id="spinBtn">🎯 转一下</button>
+    <div class="footer">转到的就是今晚的答案 ✨</div>
+  </div>
+</div>
+
+<!-- ==================== 页面2：图鉴 ==================== -->
+<div class="page" id="pageCollection">
+  <div class="collection-header">
+    <button class="btn-back" onclick="showRoulette()">← 转盘</button>
+    <h1>📖 美食图鉴</h1>
+    <span></span>
+  </div>
+
+  <div class="collection-stats">
+    已解锁 <span id="unlockedCount">0</span> / 28 道菜 · 总抽 <span id="totalDraws">0</span> 次
+  </div>
+
+  <div class="collection-grid" id="collectionGrid"></div>
+
+  <button class="btn-reset" onclick="resetCollection()">🗑️ 清空记录</button>
+</div>
+
 <script>
-  // 转盘显示的 8 道菜（视觉用）
+  // ===================== 数据 =====================
+  // 转盘显示的 8 道菜（视觉用，保持原样）
   const wheelFoods = [
     '红烧排骨', '酸菜鱼', '宫保鸡丁', '鱼香肉丝',
     '麻婆豆腐', '水煮牛肉', '糖醋里脊', '回锅肉'
   ];
 
-  // 完整数据集（菜品 + 文案），从中随机抽取结果
+  // 完整数据集（28道菜 + 图标 + 文案），从中随机抽取结果
   const foodData = [
-    { name: '隆江猪脚饭', desc: '一碗隆江猪脚饭，吃出男人的浪漫。' },
-    { name: '沃尔玛购物袋', desc: '装得下世界，装不下我的疲惫。' },
-    { name: '武装直升机', desc: '这盘旋的轰鸣声，是今晚最好的下酒菜。' },
-    { name: '马哥的草料', desc: '马哥吃了都说好，神马都是浮云。' },
-    { name: '自行车链条', desc: '咬合力十足，越嚼越带劲。' },
-    { name: '老式打字机', desc: '噼里啪啦的节奏，敲打出灵魂的味道。' },
-    { name: '二手空调滤芯', desc: '每一口呼吸，都是岁月的尘埃。' },
-    { name: '生锈的路灯', desc: '照亮你的胃，也照亮你秃顶的未来。' },
-    { name: '蓝色塑料拖鞋', desc: '踩在脚下的不仅是塑料，更是生活的无奈。' },
-    { name: '过期地铁单程票', desc: '这是通往深渊的单程，概不退换。' },
-    { name: '半干水泥块', desc: '硬度适中，补钙首选，专治各种不服。' },
-    { name: '废弃牛皮纸箱', desc: '压扁了的是纸箱，压不扁的是梦想。' },
-    { name: '美味新华字典', desc: '生僻字太多，建议小火慢炖。' },
-    { name: '工地安全帽壳', desc: '头顶的安全，碗里的保障。' },
-    { name: '旧电风扇叶片', desc: '旋转跳跃我闭着眼，割喉口感一级棒。' },
-    { name: '不锈钢脸盆', desc: '洗脸洗脚又洗菜，这才是全能选手。' },
-    { name: '无线路由器', desc: '信号满格，味道满分的电子烤肉。' },
-    { name: '泡水木门板板', desc: '受潮的不仅仅是木头，还有我的心。' },
-    { name: '监控摄像头头', desc: '你的一举一动，都在我的掌握之中。' },
-    { name: '末学的咖啡', desc: '苦涩中带着迷茫，提神又醒脑。' },
-    { name: '素素的裙子', desc: '风起裙扬，那是青春的腥味。' },
-    { name: '番茄的小说', desc: '酸甜可口，虐身虐心又虐胃。' },
-    { name: '椰子的壳', desc: '坚硬的外表下，藏着一颗没肉的心。' },
-    { name: '波奇的鼠标', desc: '点击一次，快乐一天，磨损严重。' },
-    { name: '钓鱼佬的篮球', desc: '那个男人带着篮球去钓鱼，一去不复返。' },
-    { name: '28号技师', desc: '手法轻重全看心情，今晚只修仙不修车。' },
-    { name: '金坷垃', desc: '肥料掺着吃，力量大无穷。' },
-    { name: '我的刀盾', desc: '既能挡伤害，又能盛饭菜。' },
-    { name: '咕咕嘎嘎', desc: '到底是鸡还是鸭？吃了才知道。' },
-    { name: '噜噜的橘子', desc: '剥开全是水，酸得你怀疑人生。' },
-    { name: '小书虫的勤奋', desc: '啃穿的不只是纸张，更是知识的硬度。' }
+    { icon: '🍖', name: '隆江猪脚饭',    desc: '一碗隆江猪脚饭，吃出男人的浪漫。' },
+    { icon: '🛍️', name: '沃尔玛购物袋',  desc: '装得下世界，装不下我的疲惫。' },
+    { icon: '🚁', name: '武装直升机',    desc: '这盘旋的轰鸣声，是今晚最好的下酒菜。' },
+    { icon: '🌿', name: '马哥的草料',    desc: '马哥吃了都说好，神马都是浮云。' },
+    { icon: '❄️', name: '二手空调滤芯',  desc: '每一口呼吸，都是岁月的尘埃。' },
+    { icon: '💡', name: '生锈的路灯',    desc: '照亮你的胃，也照亮你秃顶的未来。' },
+    { icon: '🚇', name: '过期地铁单程票', desc: '这是通往深渊的单程，概不退换。' },
+    { icon: '🧱', name: '半干水泥块',    desc: '硬度适中，补钙首选，专治各种不服。' },
+    { icon: '🪣', name: '不锈钢脸盆',    desc: '洗脸洗脚又洗菜，这才是全能选手。' },
+    { icon: '📡', name: '无线路由器',    desc: '信号满格，味道满分的电子烤肉。' },
+    { icon: '☕', name: '末学的咖啡',    desc: '苦涩中带着迷茫，提神又醒脑。' },
+    { icon: '👗', name: '素素的裙子',    desc: '风起裙扬，那是青春的腥味。' },
+    { icon: '📖', name: '番茄的小说',    desc: '酸甜可口，虐身虐心又虐胃。' },
+    { icon: '🥥', name: '椰子的壳',      desc: '坚硬的外表下，藏着一颗没肉的心。' },
+    { icon: '🖱️', name: '波奇的鼠标',    desc: '点击一次，快乐一天，磨损严重。' },
+    { icon: '🏀', name: '钓鱼佬的篮球',  desc: '那个男人带着篮球去钓鱼，一去不复返。' },
+    { icon: '💆', name: '28号技师',      desc: '手法轻重全看心情，今晚只修仙不修车。' },
+    { icon: '👘', name: '阿锦的女装',    desc: '今天也是想阿锦的一天呢。' },
+    { icon: '📚', name: '小书虫的勤奋',  desc: '啃穿的不只是纸张，更是知识的硬度。' },
+    { icon: '🔋', name: '共享充电宝',    desc: '借来的电量，续的是命，还的是债。' },
+    { icon: '🧊', name: '外卖保温袋',    desc: '裹住的不止是余温，还有骑手迟到的歉意。' },
+    { icon: '📦', name: '快递面单',      desc: '撕不掉的不仅是胶，更是你破碎的隐私。' },
+    { icon: '📱', name: '手机钢化膜',    desc: '碎了一地的尊严，也挡不住你换机的决心。' },
+    { icon: '📶', name: '楼顶信号塔',    desc: '满格的寂寞，是对凡人最后的嘲讽。' },
+    { icon: '🎤', name: '楼道声控灯',    desc: '叫一声就亮，像极了卑微的你。' },
+    { icon: '📌', name: '旧手机卡针',    desc: '捅破的不止是卡槽，还有运营商的套路。' },
+    { icon: '🥡', name: '塑料打包盒',    desc: '吃不完的是剩饭，倒不掉的是生活。' },
+    { icon: '🍝', name: '飞天意大利面神', desc: '挂在墙上的不仅是面条，更是不可名状的信仰。' }
   ];
 
   const segColors = [
@@ -397,6 +584,24 @@
     '#F38181','#AA96DA','#FCBAD3','#A8D8EA'
   ];
 
+  // ===================== localStorage =====================
+  const STORAGE_KEY = 'dinner_roulette_counts';
+
+  function getCounts() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+    catch { return {}; }
+  }
+  function saveCounts(counts) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(counts));
+  }
+  function addCount(name) {
+    const counts = getCounts();
+    counts[name] = (counts[name] || 0) + 1;
+    saveCounts(counts);
+    return counts[name];
+  }
+
+  // ===================== 转盘绘图 =====================
   const canvas = document.getElementById('wheel');
   const ctx = canvas.getContext('2d');
   const segs = wheelFoods.length;
@@ -433,7 +638,6 @@
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // 菜名作为长方形，中心对齐扇区中心（中轴线 × 半径一半的同心圆）
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(s + arc / 2);
@@ -441,10 +645,9 @@
       ctx.font = 'bold 22px "Microsoft YaHei", "PingFang SC", "SimHei", "Noto Sans SC", sans-serif';
       ctx.shadowColor = 'rgba(0,0,0,0.6)';
       ctx.shadowBlur = 4;
-      // 测量文字宽高，中心对准后往圆心挪一个字
       const mt = ctx.measureText(wheelFoods[i]);
       const tw = mt.width;
-      const cw = tw / wheelFoods[i].length; // 平均一个字宽度
+      const cw = tw / wheelFoods[i].length;
       const th = 22;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
@@ -452,7 +655,6 @@
       ctx.restore();
     }
 
-    // 中心装饰
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);
     g.addColorStop(0, '#ffd700');
     g.addColorStop(1, '#b8860b');
@@ -474,7 +676,7 @@
     ctx.shadowBlur = 0;
   }
 
-  // 五彩纸屑
+  // ===================== 五彩纸屑 =====================
   function confetti() {
     const box = document.getElementById('confettiBox');
     box.innerHTML = '';
@@ -494,7 +696,9 @@
     setTimeout(() => box.innerHTML = '', 5000);
   }
 
+  // ===================== 弹窗 =====================
   function showModal(item) {
+    document.getElementById('modalIcon').textContent = item.icon;
     document.getElementById('resultText').textContent = item.name;
     document.getElementById('subText').innerHTML = item.desc;
     document.getElementById('modalOverlay').classList.add('show');
@@ -506,6 +710,7 @@
     document.getElementById('confettiBox').innerHTML = '';
   }
 
+  // ===================== 转盘旋转 =====================
   function spin() {
     if (spinning) return;
     spinning = true;
@@ -515,11 +720,9 @@
     btn.disabled = true;
     btn.textContent = '🎡 转圈中...';
 
-    // 重置迷雾
     mist.classList.remove('fog-in', 'fog-out');
 
     const extra = 5 + Math.random() * 5;
-    // 随机选中一个扇区，再随机偏移，确保每次停在不同位置
     const segIndex = Math.floor(Math.random() * segs);
     const segOffset = (segIndex + Math.random()) * arc;
     const target = angle + extra * 2 * Math.PI + segOffset;
@@ -535,7 +738,6 @@
       angle = start + total * ease;
       draw(angle);
 
-      // 转盘快到停时（~80%）开始起雾
       if (p > 0.80 && !fogTriggered) {
         fogTriggered = true;
         wheelWrap.classList.add('blurred');
@@ -551,13 +753,13 @@
         btn.disabled = false;
         btn.textContent = '🎯 再转一次';
 
-        // 雾已达最浓，立即开始消散
         wheelWrap.classList.remove('blurred');
         mist.classList.remove('fog-in');
         mist.classList.add('fog-out');
-        // 迷雾一边消散，弹窗一边显现
+
         setTimeout(() => {
           const picked = foodData[Math.floor(Math.random() * foodData.length)];
+          addCount(picked.name);
           showModal(picked);
         }, 120);
       }
@@ -566,6 +768,66 @@
     requestAnimationFrame(anim);
   }
 
+  // ===================== 页面切换 =====================
+  function showCollection() {
+    document.getElementById('pageRoulette').classList.remove('active');
+    document.getElementById('pageCollection').classList.add('active');
+    renderCollection();
+  }
+
+  function showRoulette() {
+    document.getElementById('pageCollection').classList.remove('active');
+    document.getElementById('pageRoulette').classList.add('active');
+  }
+
+  // ===================== 图鉴渲染 =====================
+  function renderCollection() {
+    const counts = getCounts();
+    const grid = document.getElementById('collectionGrid');
+    grid.innerHTML = '';
+
+    let unlocked = 0;
+    let total = 0;
+    foodData.forEach(d => {
+      const c = counts[d.name] || 0;
+      if (c > 0) unlocked++;
+      total += c;
+    });
+    document.getElementById('unlockedCount').textContent = unlocked;
+    document.getElementById('totalDraws').textContent = total;
+
+    // 只显示已解锁的菜品（抽到过的），按次数降序排列
+    const unlockedItems = foodData
+      .filter(d => (counts[d.name] || 0) > 0)
+      .sort((a, b) => (counts[b.name] || 0) - (counts[a.name] || 0));
+
+    if (unlockedItems.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:rgba(255,255,255,0.25);font-size:1rem;line-height:2;">🎯 还没有抽到任何菜品……<br>去转盘转一转吧！</div>';
+      return;
+    }
+
+    unlockedItems.forEach(d => {
+      const c = counts[d.name];
+      const card = document.createElement('div');
+      card.className = 'collection-card unlocked';
+      card.innerHTML = `
+        <span class="card-icon">${d.icon}</span>
+        <div class="card-name">${d.name}</div>
+        <span class="card-count">${c}次</span>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // ===================== 清空记录 =====================
+  function resetCollection() {
+    if (confirm('确定要清空所有抽菜记录吗？')) {
+      localStorage.removeItem(STORAGE_KEY);
+      renderCollection();
+    }
+  }
+
+  // ===================== 初始化 =====================
   draw(0);
 
   document.getElementById('spinBtn').addEventListener('click', spin);
