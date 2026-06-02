@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今晚吃什么？</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    overflow: hidden;
+  }
+
+  .container { text-align: center; }
+
+  h1 {
+    color: #ffd700;
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    letter-spacing: 4px;
+  }
+
+  .wheel-wrap {
+    position: relative;
+    display: inline-block;
+    width: 360px;
+    height: 360px;
+  }
+
+  /* 外圈装饰 */
+  .outer-ring {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      #ff6b6b, #ffd93d, #6bcb77, #4d96ff,
+      #ff6b6b, #ffd93d, #6bcb77, #4d96ff,
+      #ff6b6b, #ffd93d, #6bcb77, #4d96ff,
+      #ff6b6b, #ffd93d, #6bcb77, #4d96ff
+    );
+    padding: 12px;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.25), inset 0 0 20px rgba(0,0,0,0.3);
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+    0% { filter: brightness(1); }
+    100% { filter: brightness(1.3); }
+  }
+
+  .inner-ring {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  canvas:active { filter: brightness(0.9); }
+
+  /* 指针 */
+  .pointer {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    width: 0; height: 0;
+    border-left: 22px solid transparent;
+    border-right: 22px solid transparent;
+    border-top: 40px solid #ffd700;
+    filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.8));
+  }
+  .pointer::after {
+    content: '';
+    position: absolute;
+    top: -48px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px; height: 16px;
+    background: #ffd700;
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+  }
+
+  /* 小灯珠 */
+  .bulbs {
+    position: absolute;
+    top: 6px; left: 6px; right: 6px; bottom: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .bulb {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0.8;
+    animation: blink 0.8s ease-in-out infinite alternate;
+  }
+  .bulb:nth-child(odd) { animation-delay: 0.4s; }
+  @keyframes blink {
+    0% { opacity: 0.2; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .btn-spin {
+    display: block;
+    margin: 35px auto 0;
+    padding: 16px 60px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1a1a2e;
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.4);
+    letter-spacing: 2px;
+  }
+  .btn-spin:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 10px 35px rgba(255, 215, 0, 0.6);
+  }
+  .btn-spin:active { transform: scale(0.95); }
+  .btn-spin:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* 弹窗 */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+  .modal-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal {
+    background: linear-gradient(145deg, #2d1b00, #4a2800);
+    border-radius: 24px;
+    padding: 40px 50px;
+    text-align: center;
+    max-width: 480px;
+    box-shadow: 0 0 60px rgba(255, 200, 0, 0.3), 0 20px 60px rgba(0,0,0,0.5);
+    border: 2px solid #ffd700;
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal::before {
+    content: '🍚';
+    position: absolute;
+    top: -30px; right: -20px;
+    font-size: 120px;
+    opacity: 0.1;
+    transform: rotate(20deg);
+  }
+
+  .modal-icon { font-size: 4rem; margin-bottom: 10px; animation: bounce 1s ease infinite; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .modal h2 {
+    color: #ffd700;
+    font-size: 1.6rem;
+    margin: 10px 0;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+  }
+
+  .result-text {
+    font-size: 2.8rem;
+    font-weight: bold;
+    color: #fff;
+    margin: 15px 0;
+    text-shadow: 0 0 30px rgba(255, 200, 0, 0.5);
+    letter-spacing: 4px;
+    padding: 10px 30px;
+    background: linear-gradient(135deg, #8b4513, #a0522d);
+    border-radius: 12px;
+    display: inline-block;
+    border: 2px solid #ffd700;
+  }
+
+  .sub-text {
+    color: #d4a574;
+    font-size: 1rem;
+    margin: 15px 0 10px;
+    line-height: 1.6;
+  }
+
+  .btn-close {
+    margin-top: 15px;
+    padding: 12px 40px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2d1b00;
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-close:hover { transform: scale(1.05); }
+
+  /* 五彩纸屑 */
+  .confetti-box {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 101;
+    overflow: hidden;
+  }
+  .confetti {
+    position: absolute;
+    font-size: 18px;
+    top: -20px;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* 窄屏适配 */
+  @media (max-width: 440px) {
+    .modal {
+      padding: 28px 20px;
+      margin: 0 12px;
+    }
+    .result-text {
+      font-size: 1.5rem;
+      padding: 8px 14px;
+      letter-spacing: 1px;
+      word-break: keep-all;
+    }
+    .sub-text {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    h1 { font-size: 1.8rem; }
+  }
+
+  .footer {
+    color: rgba(255,255,255,0.25);
+    margin-top: 20px;
+    font-size: 0.85rem;
+  }
+
+  /* ===== 迷雾揭晓 ===== */
+  .mist-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 90;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(210, 200, 190, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    pointer-events: none;
+    transition: background 0.9s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1), -webkit-backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .mist-overlay.fog-in {
+    background: rgba(210, 200, 190, 0.70);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .mist-overlay.fog-out {
+    background: rgba(210, 200, 190, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    transition: background 0.9s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1), -webkit-backdrop-filter 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* 转盘模糊 */
+  .wheel-wrap.blurred {
+    filter: blur(4px);
+    transition: filter 0.6s ease;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🍽️ 今晚吃什么？</h1>
+
+  <div class="wheel-wrap">
+    <div class="outer-ring">
+      <div class="inner-ring">
+        <div class="bulbs" id="bulbs"></div>
+        <canvas id="wheel" width="600" height="600"></canvas>
+      </div>
+    </div>
+    <div class="pointer"></div>
+  </div>
+
+  <button class="btn-spin" id="spinBtn">🎯 转一下</button>
+  <div class="footer">转到的就是今晚的答案 ✨</div>
+</div>
+
+<!-- 迷雾揭晓（纯雾效，结果由弹窗呈现） -->
+<div class="mist-overlay" id="mistOverlay"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon">🍖</div>
+    <h2>🎉 今晚就吃这个！</h2>
+    <div class="result-text" id="resultText">隆江猪脚饭</div>
+    <div class="sub-text" id="subText">
+      命运的安排，不可抗拒！<br>
+      吃了都说好 👍
+    </div>
+    <button class="btn-close" onclick="closeModal()">好！就吃这个！</button>
+  </div>
+</div>
+
+<div class="confetti-box" id="confettiBox"></div>
+
+<script>
+  // 转盘显示的 8 道菜（视觉用）
+  const wheelFoods = [
+    '红烧排骨', '酸菜鱼', '宫保鸡丁', '鱼香肉丝',
+    '麻婆豆腐', '水煮牛肉', '糖醋里脊', '回锅肉'
+  ];
+
+  // 完整数据集（菜品 + 文案），从中随机抽取结果
+  const foodData = [
+    { name: '隆江猪脚饭', desc: '一碗隆江猪脚饭，吃出男人的浪漫。' },
+    { name: '沃尔玛购物袋', desc: '装得下世界，装不下我的疲惫。' },
+    { name: '武装直升机', desc: '这盘旋的轰鸣声，是今晚最好的下酒菜。' },
+    { name: '马哥的草料', desc: '马哥吃了都说好，神马都是浮云。' },
+    { name: '自行车链条', desc: '咬合力十足，越嚼越带劲。' },
+    { name: '老式打字机', desc: '噼里啪啦的节奏，敲打出灵魂的味道。' },
+    { name: '二手空调滤芯', desc: '每一口呼吸，都是岁月的尘埃。' },
+    { name: '生锈的路灯', desc: '照亮你的胃，也照亮你秃顶的未来。' },
+    { name: '蓝色塑料拖鞋', desc: '踩在脚下的不仅是塑料，更是生活的无奈。' },
+    { name: '过期地铁单程票', desc: '这是通往深渊的单程，概不退换。' },
+    { name: '半干水泥块', desc: '硬度适中，补钙首选，专治各种不服。' },
+    { name: '废弃牛皮纸箱', desc: '压扁了的是纸箱，压不扁的是梦想。' },
+    { name: '美味新华字典', desc: '生僻字太多，建议小火慢炖。' },
+    { name: '工地安全帽壳', desc: '头顶的安全，碗里的保障。' },
+    { name: '旧电风扇叶片', desc: '旋转跳跃我闭着眼，割喉口感一级棒。' },
+    { name: '不锈钢脸盆', desc: '洗脸洗脚又洗菜，这才是全能选手。' },
+    { name: '无线路由器', desc: '信号满格，味道满分的电子烤肉。' },
+    { name: '泡水木门板板', desc: '受潮的不仅仅是木头，还有我的心。' },
+    { name: '监控摄像头头', desc: '你的一举一动，都在我的掌握之中。' },
+    { name: '末学的咖啡', desc: '苦涩中带着迷茫，提神又醒脑。' },
+    { name: '素素的裙子', desc: '风起裙扬，那是青春的腥味。' },
+    { name: '番茄的小说', desc: '酸甜可口，虐身虐心又虐胃。' },
+    { name: '椰子的壳', desc: '坚硬的外表下，藏着一颗没肉的心。' },
+    { name: '波奇的鼠标', desc: '点击一次，快乐一天，磨损严重。' },
+    { name: '钓鱼佬的篮球', desc: '那个男人带着篮球去钓鱼，一去不复返。' },
+    { name: '28号技师', desc: '手法轻重全看心情，今晚只修仙不修车。' },
+    { name: '金坷垃', desc: '肥料掺着吃，力量大无穷。' },
+    { name: '我的刀盾', desc: '既能挡伤害，又能盛饭菜。' },
+    { name: '咕咕嘎嘎', desc: '到底是鸡还是鸭？吃了才知道。' },
+    { name: '噜噜的橘子', desc: '剥开全是水，酸得你怀疑人生。' }
+  ];
+
+  const segColors = [
+    '#FF6B6B','#4ECDC4','#FFE66D','#95E1D3',
+    '#F38181','#AA96DA','#FCBAD3','#A8D8EA'
+  ];
+
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const segs = wheelFoods.length;
+  const arc = (2 * Math.PI) / segs;
+  let angle = 0;
+  let spinning = false;
+
+  // 灯珠
+  (() => {
+    const c = document.getElementById('bulbs');
+    for (let i = 0; i < 20; i++) {
+      const a = (i / 20) * 2 * Math.PI - Math.PI / 2;
+      const d = document.createElement('div');
+      d.className = 'bulb';
+      d.style.left = (168 + 160 * Math.cos(a) - 5) + 'px';
+      d.style.top  = (168 + 160 * Math.sin(a) - 5) + 'px';
+      c.appendChild(d);
+    }
+  })();
+
+  function draw(a) {
+    const cx = 300, cy = 300, r = 290;
+    ctx.clearRect(0, 0, 600, 600);
+
+    for (let i = 0; i < segs; i++) {
+      const s = a + i * arc, e = s + arc;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, s, e);
+      ctx.closePath();
+      ctx.fillStyle = segColors[i % segColors.length];
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 菜名作为长方形，中心对齐扇区中心（中轴线 × 半径一半的同心圆）
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(s + arc / 2);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 22px "Microsoft YaHei", "PingFang SC", "SimHei", "Noto Sans SC", sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 4;
+      // 测量文字宽高，中心对准后往圆心挪一个字
+      const mt = ctx.measureText(wheelFoods[i]);
+      const tw = mt.width;
+      const cw = tw / wheelFoods[i].length; // 平均一个字宽度
+      const th = 22;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(wheelFoods[i], r * 0.5 - tw / 2 - cw * 1.5, -th / 2);
+      ctx.restore();
+    }
+
+    // 中心装饰
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);
+    g.addColorStop(0, '#ffd700');
+    g.addColorStop(1, '#b8860b');
+    ctx.beginPath();
+    ctx.arc(cx, cy, 38, 0, 2 * Math.PI);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+    ctx.fillText('吃啥?', cx, cy);
+    ctx.shadowBlur = 0;
+  }
+
+  // 五彩纸屑
+  function confetti() {
+    const box = document.getElementById('confettiBox');
+    box.innerHTML = '';
+    const cs = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff9ff3','#f368e0','#ffd700'];
+    const shapes = ['■','●','▲','★','♦'];
+    for (let i = 0; i < 80; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.textContent = shapes[i % shapes.length];
+      el.style.left = Math.random() * 100 + '%';
+      el.style.color = cs[Math.floor(Math.random() * cs.length)];
+      el.style.fontSize = (10 + Math.random() * 16) + 'px';
+      el.style.animationDuration = (2 + Math.random() * 2) + 's';
+      el.style.animationDelay = (Math.random() * 1.5) + 's';
+      box.appendChild(el);
+    }
+    setTimeout(() => box.innerHTML = '', 5000);
+  }
+
+  function showModal(item) {
+    document.getElementById('resultText').textContent = item.name;
+    document.getElementById('subText').innerHTML = item.desc;
+    document.getElementById('modalOverlay').classList.add('show');
+    confetti();
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+    document.getElementById('confettiBox').innerHTML = '';
+  }
+
+  function spin() {
+    if (spinning) return;
+    spinning = true;
+    const btn = document.getElementById('spinBtn');
+    const mist = document.getElementById('mistOverlay');
+    const wheelWrap = document.querySelector('.wheel-wrap');
+    btn.disabled = true;
+    btn.textContent = '🎡 转圈中...';
+
+    // 重置迷雾
+    mist.classList.remove('fog-in', 'fog-out');
+
+    const extra = 5 + Math.random() * 5;
+    // 随机选中一个扇区，再随机偏移，确保每次停在不同位置
+    const segIndex = Math.floor(Math.random() * segs);
+    const segOffset = (segIndex + Math.random()) * arc;
+    const target = angle + extra * 2 * Math.PI + segOffset;
+    const start = angle;
+    const total = target - start;
+    const dur = 4000 + Math.random() * 1000;
+    const t0 = performance.now();
+    let fogTriggered = false;
+
+    function anim(now) {
+      const p = Math.min((now - t0) / dur, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      angle = start + total * ease;
+      draw(angle);
+
+      // 转盘快到停时（~80%）开始起雾
+      if (p > 0.80 && !fogTriggered) {
+        fogTriggered = true;
+        wheelWrap.classList.add('blurred');
+        mist.classList.add('fog-in');
+      }
+
+      if (p < 1) {
+        requestAnimationFrame(anim);
+      } else {
+        angle = target;
+        draw(angle);
+        spinning = false;
+        btn.disabled = false;
+        btn.textContent = '🎯 再转一次';
+
+        // 雾已达最浓，立即开始消散
+        wheelWrap.classList.remove('blurred');
+        mist.classList.remove('fog-in');
+        mist.classList.add('fog-out');
+        // 迷雾一边消散，弹窗一边显现
+        setTimeout(() => {
+          const picked = foodData[Math.floor(Math.random() * foodData.length)];
+          showModal(picked);
+        }, 120);
+      }
+    }
+
+    requestAnimationFrame(anim);
+  }
+
+  draw(0);
+
+  document.getElementById('spinBtn').addEventListener('click', spin);
+  canvas.addEventListener('click', spin);
+
+  document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+
+</body>
+</html>
